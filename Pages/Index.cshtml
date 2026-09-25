@@ -1,0 +1,55 @@
+@page
+@model DateDurationRazor.Pages.IndexModel
+@{
+    ViewData["Title"] = "Date Duration Calculator";
+}
+
+<h1>Date Duration Calculator</h1>
+
+<form method="post" style="max-width: 520px;">
+    <div style="display:grid; gap:12px;">
+        <div>
+            <label asp-for="Start"></label><br />
+            <input asp-for="Start" type="date" />
+            <span asp-validation-for="Start" style="color:#b00020;"></span>
+        </div>
+
+        <div>
+            <label asp-for="End"></label><br />
+            <input asp-for="End" type="date" />
+            <span asp-validation-for="End" style="color:#b00020;"></span>
+        </div>
+
+        <div>
+            <label>
+                <input asp-for="IncludeEndDate" />
+                Include end date in calculation (1 day is added)
+            </label>
+        </div>
+
+        <button type="submit">Calculate duration</button>
+    </div>
+</form>
+
+@if (Model.Result is not null)
+{
+    <hr />
+    <h2>Result</h2>
+
+    <div style="display:grid; gap:8px;">
+        <div><strong>Start:</strong> @Model.Result.Start</div>
+        <div><strong>End:</strong> @Model.Result.End</div>
+        <div><strong>Include end date:</strong> @(Model.Result.IncludeEndDate ? "Yes" : "No")</div>
+
+        <div>
+            <strong>Calendar duration (Y/M/D):</strong>
+            @Model.Result.Years years, @Model.Result.Months months, @Model.Result.Days days
+        </div>
+
+        <div><strong>Total days:</strong> @Model.Result.TotalDays</div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

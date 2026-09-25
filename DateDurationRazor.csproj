@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Production-only build: see Directory.Build.props for the Release default. -->
+  <Target Name="ProductionOnly" BeforeTargets="BeforeBuild;Restore;_GenerateRestoreProjectSpec" Condition="'$(Configuration)' != 'Release'">
+    <Error Text="This project builds Production (Release) only. Configuration '$(Configuration)' is not allowed. Run 'dotnet build' without -c, or use -c Release." />
+  </Target>
+
+</Project>
