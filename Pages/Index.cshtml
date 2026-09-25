@@ -1,53 +1,181 @@
 @page
+@using DateDurationRazor.Services
 @model DateDurationRazor.Pages.IndexModel
 @{
-    ViewData["Title"] = "Date Duration Calculator";
+    ViewData["Title"] = "Days Calculator: Days Between Two Dates";
 }
 
-<h1>Date Duration Calculator</h1>
+<h1>Days Calculator: Days Between Two Dates</h1>
+<p class="text-muted">How many days, months, and years are there between two dates?</p>
 
-<form method="post" style="max-width: 520px;">
-    <div style="display:grid; gap:12px;">
-        <div>
-            <label asp-for="Start"></label><br />
-            <input asp-for="Start" type="date" />
-            <span asp-validation-for="Start" style="color:#b00020;"></span>
+<form method="post" style="max-width: 760px;">
+    <input asp-for="ShowTime" type="hidden" />
+    <input asp-for="ShowZones" type="hidden" />
+
+    <div class="row g-4">
+        @* ---- Time zone conversion (hidden until opened) ---- *@
+        <div class="col-sm-6 js-zones" hidden="@(!Model.ShowZones)">
+            <h2 class="h5">Start Location</h2>
+            <label asp-for="StartZone" class="form-label visually-hidden"></label>
+            <input asp-for="StartZone" list="tzlist" class="form-control" placeholder="Search for time zone..." autocomplete="off" />
+            <span asp-validation-for="StartZone" class="text-danger"></span>
+            <div class="small">Suggestions:
+                @foreach (var id in TimeZones.Suggestions)
+                {
+                    <a href="#" class="js-set" data-target="StartZone" data-value="@id">@id</a><text> </text>
+                }
+            </div>
+        </div>
+        <div class="col-sm-6 js-zones" hidden="@(!Model.ShowZones)">
+            <h2 class="h5">End Location</h2>
+            <label asp-for="EndZone" class="form-label visually-hidden"></label>
+            <input asp-for="EndZone" list="tzlist" class="form-control" placeholder="Search for time zone..." autocomplete="off" />
+            <span asp-validation-for="EndZone" class="text-danger"></span>
+            <div class="small">Suggestions:
+                @foreach (var id in TimeZones.Suggestions)
+                {
+                    <a href="#" class="js-set" data-target="EndZone" data-value="@id">@id</a><text> </text>
+                }
+            </div>
         </div>
 
-        <div>
-            <label asp-for="End"></label><br />
-            <input asp-for="End" type="date" />
-            <span asp-validation-for="End" style="color:#b00020;"></span>
+        @* ---- Dates ---- *@
+        <div class="col-sm-6">
+            <h2 class="h5">Start Date</h2>
+            <label asp-for="Start" class="form-label visually-hidden"></label>
+            <input asp-for="Start" type="date" class="form-control" />
+            <span asp-validation-for="Start" class="text-danger"></span>
+            <div><a href="#" class="js-today" data-target="Start">Today</a></div>
+
+            <div class="js-time mt-3" hidden="@(!Model.ShowTime)">
+                <label asp-for="StartTime" class="form-label mb-1">Hour : Minute : Second</label>
+                <input asp-for="StartTime" type="time" step="1" class="form-control" />
+                <div class="small">
+                    <a href="#" class="js-now" data-target="StartTime">Now</a> |
+                    <a href="#" class="js-set" data-target="StartTime" data-value="00:00:00">Start of Day</a> |
+                    <a href="#" class="js-set" data-target="StartTime" data-value="12:00:00">Noon</a>
+                </div>
+            </div>
         </div>
 
-        <div>
-            <label>
-                <input asp-for="IncludeEndDate" />
-                Include end date in calculation (1 day is added)
-            </label>
+        <div class="col-sm-6">
+            <h2 class="h5">End Date</h2>
+            <label asp-for="End" class="form-label visually-hidden"></label>
+            <input asp-for="End" type="date" class="form-control" />
+            <span asp-validation-for="End" class="text-danger"></span>
+            <div><a href="#" class="js-today" data-target="End">Today</a></div>
+
+            <div class="js-time mt-3" hidden="@(!Model.ShowTime)">
+                <label asp-for="EndTime" class="form-label mb-1">Hour : Minute : Second</label>
+                <input asp-for="EndTime" type="time" step="1" class="form-control" />
+                <div class="small">
+                    <a href="#" class="js-now" data-target="EndTime">Now</a> |
+                    <a href="#" class="js-set" data-target="EndTime" data-value="00:00:00">Start of Day</a> |
+                    <a href="#" class="js-set" data-target="EndTime" data-value="12:00:00">Noon</a>
+                </div>
+            </div>
         </div>
 
-        <button type="submit">Calculate duration</button>
+        @* ---- Options ---- *@
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="IncludeEndDate" class="form-check-input" />
+                <label asp-for="IncludeEndDate" class="form-check-label fw-bold">
+                    Include end date in calculation (1 day is added)
+                </label>
+            </div>
+            <div class="form-check">
+                <input asp-for="CountOnlyWorkdays" class="form-check-input" />
+                <label asp-for="CountOnlyWorkdays" class="form-check-label">
+                    Count only workdays (Monday to Friday)
+                </label>
+            </div>
+            <div class="small mt-2">
+                <a href="#" class="js-toggle" data-section="time" data-flag="ShowTime"
+                   data-add="Add time fields" data-remove="Remove time fields">@(Model.ShowTime ? "Remove time fields" : "Add time fields")</a><br />
+                <a href="#" class="js-toggle" data-section="zones" data-flag="ShowZones"
+                   data-add="Add time zone conversion" data-remove="Remove time zone conversion">@(Model.ShowZones ? "Remove time zone conversion" : "Add time zone conversion")</a>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-success">Calculate Duration</button>
+        </div>
     </div>
+
+    <datalist id="tzlist">
+        @foreach (var id in TimeZones.Ids)
+        {
+            <option value="@id"></option>
+        }
+    </datalist>
 </form>
 
 @if (Model.Result is not null)
 {
+    var r = Model.Result;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var unit = r.CountOnlyWorkdays ? "workday" : "day";
+    var counted = Math.Abs(r.CountedDays);
+    var total = Math.Abs(r.TotalDays);
+    var h = Math.Abs(r.Hours); var m = Math.Abs(r.Minutes); var s = Math.Abs(r.Seconds);
+    var countedSeconds = Math.Abs(r.CountedSeconds);
+    var timeFmt = "HH:mm:ss";
+
+    string Plural(int n, string word) => $"{n} {word}{(n == 1 ? "" : "s")}";
+    string Headline = r.HasTime
+        ? $"{Plural(counted, unit)}, {Plural(h, "hour")}, {Plural(m, "minute")}, {Plural(s, "second")}"
+        : Plural(counted, unit);
+
     <hr />
-    <h2>Result</h2>
+    <h2 class="h4">Result: @Headline</h2>
 
-    <div style="display:grid; gap:8px;">
-        <div><strong>Start:</strong> @Model.Result.Start</div>
-        <div><strong>End:</strong> @Model.Result.End</div>
-        <div><strong>Include end date:</strong> @(Model.Result.IncludeEndDate ? "Yes" : "No")</div>
+    <p class="mb-1">
+        It is @Headline
+        from the start date to the end date@(r.IncludeEndDate ? ", end date included." : ", but not including the end date.")
+        @if (r.Sign < 0)
+        {
+            <span class="text-muted">(The end date is before the start date.)</span>
+        }
+    </p>
 
-        <div>
-            <strong>Calendar duration (Y/M/D):</strong>
-            @Model.Result.Years years, @Model.Result.Months months, @Model.Result.Days days
-        </div>
+    <dl class="row mt-3" style="max-width: 760px;">
+        <dt class="col-sm-5">From and including</dt>
+        <dd class="col-sm-7">
+            @r.Start.ToString("dddd, d MMMM yyyy", inv)@(r.StartTime is { } st ? " at " + st.ToString(timeFmt, inv) : "")
+            @if (r.StartZone is not null) { <span class="text-muted">(@r.StartZone)</span> }
+        </dd>
 
-        <div><strong>Total days:</strong> @Model.Result.TotalDays</div>
-    </div>
+        <dt class="col-sm-5">To@(r.IncludeEndDate ? " and including" : ", but not including")</dt>
+        <dd class="col-sm-7">
+            @r.End.ToString("dddd, d MMMM yyyy", inv)@(r.EndTime is { } et ? " at " + et.ToString(timeFmt, inv) : "")
+            @if (r.EndZone is not null) { <span class="text-muted">(@r.EndZone)</span> }
+        </dd>
+
+        <dt class="col-sm-5">Calendar duration</dt>
+        <dd class="col-sm-7">
+            @Math.Abs(r.Years) years, @Math.Abs(r.Months) months, @Math.Abs(r.Days) days@(r.HasTime ? $", {h} hours, {m} minutes, {s} seconds" : "")
+        </dd>
+
+        <dt class="col-sm-5">Total days</dt>
+        <dd class="col-sm-7">@total</dd>
+
+        <dt class="col-sm-5">Workdays (Mon to Fri)</dt>
+        <dd class="col-sm-7">@Math.Abs(r.Workdays)</dd>
+
+        <dt class="col-sm-5">Weekend days</dt>
+        <dd class="col-sm-7">@Math.Abs(r.WeekendDays)</dd>
+    </dl>
+
+    <h3 class="h6">Alternative time units</h3>
+    <p class="mb-0">@Headline can be converted to one of these units:</p>
+    <ul>
+        <li>@countedSeconds.ToString("N0", inv) seconds</li>
+        <li>@((countedSeconds / 60).ToString("N0", inv)) minutes</li>
+        <li>@((countedSeconds / 3_600).ToString("N0", inv)) hours</li>
+        <li>@Plural(counted, "day")@(r.HasTime ? $" and {h} hours" : "")</li>
+        <li>@(counted / 7) weeks and @(counted % 7) days@(r.HasTime ? $" and {h} hours" : "")</li>
+    </ul>
 }
 
 @section Scripts {
